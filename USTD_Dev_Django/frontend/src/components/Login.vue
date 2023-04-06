@@ -1,0 +1,49 @@
+<template>
+  <div>
+    <meta charset="utf-8">
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=1280,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=no">
+    <link href="../../static/css/vendor.style.css" rel="stylesheet">
+    <link href="../../static/css/login.style.css" rel="stylesheet">
+    <div id="mount">
+      <div data-reactroot="">
+        <div class="_1RxfFVyy86UE1t7lqCDcGD">
+          <div class="_3CkMCIo8-RsWtcLQqsuKBh">
+            <div class="_3lr3h2hawOi8pO8fYLQcjI">用户登录</div>
+            <form action="login/" method="post">
+              {% csrf_token %}
+              <div class="_6vZdUKmPDGrrza0LnuXD9">
+                <div>
+                  <div class="mobileIcon"></div>
+                  <input type="text" name="id" autocomplete="off">
+                  <p class="_2nSTvdgBwioyepYsyeaVPN"></p>
+                </div>
+              </div>
+              <div class="_6vZdUKmPDGrrza0LnuXD9">
+                <div>
+                  <div class="passwordIcon"></div>
+                  <input type="password" name="pwd" autocomplete="off">
+                  <p class="_2nSTvdgBwioyepYsyeaVPN"></p>
+                </div>
+              </div>
+              <div class="_6vZdUKmPDGrrza0LnuXD9">
+                <input type="submit" value="登录" class="_2ZggRBvDTyawWaQQ6ambu4">
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+export default {
+  name: 'Login'
+}
+</script>
+
+<style scoped>
+
+</style>

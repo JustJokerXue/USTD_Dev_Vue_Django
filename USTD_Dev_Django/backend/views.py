@@ -213,6 +213,7 @@ def shenhe_upload(request):  # 上传审核材料接口
 
 def shenhe_get(request):
     stu_id = request.session.get('ID')
+    name = request.session.get('name')
     if stu_id is None:
         return JsonResponse({
             'code': 403,

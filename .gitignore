@@ -1,0 +1,17 @@
+.DS_Store
+USTD_Dev_Django/frontend/node_modules/
+USTD_Dev_Django/frontend//dist/
+USTD_Dev_Django/frontend/npm-debug.log*
+USTD_Dev_Django/frontend/yarn-debug.log*
+USTD_Dev_Django/frontend/yarn-error.log*
+USTD_Dev_Django/frontend/test/unit/coverage/
+USTD_Dev_Django/frontend/test/e2e/reports/
+USTD_Dev_Django/frontend/selenium-debug.log
+
+# Editor directories and files
+.idea
+.vscode
+*.suo
+*.ntvs*
+*.njsproj
+*.sln

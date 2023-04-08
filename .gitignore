@@ -1,6 +1,7 @@
 .DS_Store
 USTD_Dev_Django/frontend/node_modules/
-USTD_Dev_Django/frontend//dist/
+USTD_Dev_Django/frontend/dist/
+node_modules/
 USTD_Dev_Django/frontend/npm-debug.log*
 USTD_Dev_Django/frontend/yarn-debug.log*
 USTD_Dev_Django/frontend/yarn-error.log*

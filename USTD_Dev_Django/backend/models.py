@@ -4,14 +4,40 @@ from django.db import models
 from django.utils.html import format_html
 
 
+class GraduationRequirement(models.Model):  # 学生毕业要求表
+    id = models.IntegerField(default=0, verbose_name='学业要求id', primary_key=True)
+    credit = models.FloatField(default=0, verbose_name='要求学分', null=True)
+    compulsory = models.FloatField(default=0, verbose_name='必修课成绩', null=True)
+    elective = models.FloatField(default=0, verbose_name='选修课成绩', null=True)
+    physical = models.FloatField(default=0, verbose_name='体测成绩', null=True)
+    cet4 = models.FloatField(default=0, verbose_name='四级成绩', null=True)
+    mandarin = models.FloatField(default=0, verbose_name='普通话成绩', null=True)
+
+    class Meta:
+        db_table = 'GraduationRequirement'
+        verbose_name = "学业要求"
+        verbose_name_plural = "学业要求"
+        constraints = [
+            models.CheckConstraint(check=models.Q(credit__gte=0, credit__lte=170), name='grad_req_credit'),
+            models.CheckConstraint(check=models.Q(compulsory__gte=0, compulsory__lte=100), name='grad_req_compulsory'),
+            models.CheckConstraint(check=models.Q(elective__gte=0, elective__lte=100), name='grad_req_elective'),
+            models.CheckConstraint(check=models.Q(physical__gte=0, physical__lte=100), name='grad_req_physical'),
+            models.CheckConstraint(check=models.Q(cet4__gte=0, cet4__lte=750), name='grad_req_cet4'),
+            models.CheckConstraint(check=models.Q(mandarin__gte=0, mandarin__lte=100), name='grad_req_mandarin'),
+        ]
+
+
 class Early_Warning(models.Model):  # 学业预警成绩表
     id = models.IntegerField(default=0, verbose_name='学号', primary_key=True)
-    minimum = models.IntegerField(default=0, verbose_name='最低学分要求', null=True)
-    compulsory = models.IntegerField(default=0, verbose_name='必修课成绩', null=True)
-    elective = models.IntegerField(default=0, verbose_name='选修课成绩', null=True)
-    physical = models.IntegerField(default=0, verbose_name='体测成绩', null=True)
-    cet4 = models.IntegerField(default=0, verbose_name='四级成绩', null=True)
-    mandarin = models.IntegerField(default=0, verbose_name='普通话成绩', null=True)
+    minimum = models.FloatField(default=0, verbose_name='实修学分', null=True)
+    compulsory = models.FloatField(default=0, verbose_name='必修课成绩', null=True)
+    elective = models.FloatField(default=0, verbose_name='选修课成绩', null=True)
+    physical = models.FloatField(default=0, verbose_name='体测成绩', null=True)
+    cet4 = models.FloatField(default=0, verbose_name='四级成绩', null=True)
+    mandarin = models.FloatField(default=0, verbose_name='普通话成绩', null=True)
+    grad_req_id = models.ForeignKey(GraduationRequirement, blank=True, null=True,
+                                    verbose_name="学业要求id", on_delete=models.DO_NOTHING,
+                                    db_column='stu_gradReq_id')
 
     class Meta:
         db_table = 'Early_Warning'
@@ -207,7 +233,10 @@ class administrator(models.Model):  # 管理员用户信息表
 class shenhe(models.Model):  # 上传审核材料汇总表
     no = models.IntegerField(default=0, verbose_name='学号', null=True)
     miaoshu = models.CharField(max_length=200, verbose_name='材料描述', null=True)
-    leibie = models.CharField(max_length=200, verbose_name='材料类别', null=True)
+    leibie = models.CharField(max_length=200, verbose_name='材料类别',
+                              choices=(('zy', '专业技术能力'), ('cx', '创新创业能力'),
+                                       ('gl', '管理实践能力'), ('zh', '综合发展能力')), default='zy')
+    extra_points = models.IntegerField(default=0, verbose_name='加分', null=True)
     image = models.ImageField(default=0, verbose_name='材料图片', null=True)
     image_img = models.ImageField(default=0, verbose_name='材料图片', null=True)
     zhuangtai = models.CharField(max_length=200, verbose_name='状态',
@@ -217,6 +246,10 @@ class shenhe(models.Model):  # 上传审核材料汇总表
         db_table = 'shenhe'
         verbose_name = "审核"
         verbose_name_plural = "审核"
+        constraints = [
+            models.CheckConstraint(check=models.Q(extra_points__gte=0, extra_points__lte=100),
+                                   name='extra_points'),
+        ]
 
     def image_img(self):
         # 这里添加一个防空判断

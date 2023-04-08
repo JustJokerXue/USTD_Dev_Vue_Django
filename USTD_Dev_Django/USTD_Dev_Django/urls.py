@@ -1,7 +1,7 @@
-"""USTD_Dev_Django URL Configuration
+"""USTD_Dev_all URL Configuration
 
 The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/4.0/topics/http/urls/
+    https://docs.djangoproject.com/en/4.1/topics/http/urls/
 Examples:
 Function views
     1. Add an import:  from my_app import views
@@ -15,12 +15,22 @@ Including another URLconf
 """
 from backend import views
 from django.conf import settings
+from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path
-from django.views.generic.base import TemplateView
+
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path(r'', TemplateView.as_view(template_name="index.html")),
-    path('Student/', TemplateView.as_view(template_name="")),
-]
+                  path('login', views.login),
+                  path('admin', admin.site.urls),
+                  path('login/index', views.index),
+                  path(r'login/infor', views.infor),
+                  path(r'shenhe_delete', views.shenhe_delete),
+                  path(r'login/form-editors', views.form_editor),
+                  path(r'login/shenhe_get', views.shenhe_get),
+                  path(r'login/shenhe_upload', views.shenhe_upload),
+                  path(r'login/Academic_Early_Warning', views.academic_Early_Warning),
+                  path('login/password_change_form', views.password_change_form, name='password_change_form'),
+                  path(r'login/suggestion/<int:p1>', views.suggestion),
+                  path('api/get_score_std', views.get_score_std)
+              ]

@@ -1,78 +1,140 @@
 import sqlite3
+import traceback
 
 import matplotlib.pyplot as plt
 import numpy as np
 from django.db.models import Max
-from django.shortcuts import render, redirect
 from django.views.decorators.csrf import csrf_protect
+import json
 
 from . import models
-from .models import Score
-from .models import Student, Early_Warning
 
+from .serializers import *
+from django.http import JsonResponse
 
 # Create your views here.
 
 
-def login_view(request):  # 登录页面调用
-    return render(request, 'login.html')
-
-
 def index(request):  # 主页面功能实现及调用
-    name = request.session.get('name')
-    print(name)
+    stu_id = request.session.get('ID')
+    print(stu_id)
+    if stu_id is None:
+        return JsonResponse({
+            'code': 403,
+            'msg': '用户没有登录'
+        })
+    max_score_list = max_Score()
+    m1 = max_score_list[0]
+    m2 = max_score_list[1]
+    m3 = max_score_list[2]
+    m4 = max_score_list[3]
+    m5 = max_score_list[4]
+    try:
+        std = Early_Warning.objects.get(id=stu_id)
+    except Exception as err:
+        print(err)
+        return JsonResponse({
+            'code': 500,
+            'msg': '该学生在学业预警信息表中无记录',
+        })
+
+    graduation_req = std.grad_req_id
+    if std.minimum >= graduation_req.credit and std.compulsory >= graduation_req.compulsory \
+            and std.elective >= graduation_req.elective and std.physical >= graduation_req.physical \
+            and std.cet4 >= graduation_req.cet4 and std.mandarin >= graduation_req.mandarin:
+        ans = '满足毕业最低要求'
+    else:
+        ans = '不满足毕业最低要求'
+    return JsonResponse({
+        'code': 200,
+        'msg': '获取数据成功',
+        'data': {
+            'm1': m1,
+            'm2': m2,
+            'm3': m3,
+            'm4': m4,
+            'm5': m5,
+            'ans': ans
+        }
+    })
+
+
+def get_score_std(request):
     num_all = Score.objects.all().count()
     num_pass = Score.objects.filter(zy__gte=60, cx__gte=60, zs__gte=60, gl__gte=60, zh__gte=60).count()
-    number = int((num_pass / num_all) * 100)
+    rate = int((num_pass / num_all) * 100)
     zh = Score.objects.filter(zy__gte=60).count()
     ch = Score.objects.filter(cx__gte=60).count()
     know = Score.objects.filter(zs__gte=60).count()
     gl = Score.objects.filter(gl__gte=60).count()
-    e = Student.objects.get(name=name)
-    std_id = e.id
-    print(std_id)
-    select(std_id)
-    max_Score_list = max_Score()
-    m1 = max_Score_list[0]
-    m2 = max_Score_list[1]
-    m3 = max_Score_list[2]
-    m4 = max_Score_list[3]
-    m5 = max_Score_list[4]
-    std = Early_Warning.objects.get(id=std_id)
-    if std.minimum > 24 and std.compulsory > 20 and std.elective > 4 and std.physical > 60 and std.cet4 > 425 and std.mandarin > 80:
-        ans = '满足毕业最低要求'
-    else:
-        ans = '不满足毕业最低要求'
-    return render(request, 'index.html', locals())
+
+    return JsonResponse({
+        'code': 200,
+        'msg': '获取数据成功',
+        'data': {
+            'num_all': num_all,
+            'num_pass': num_pass,
+            'rate': rate,
+            'zh': zh,
+            'ch': ch,
+            'know': know,
+            'gl': gl
+        }
+    })
 
 
-def infor(request):  # 用户信息页面功能实现及调用
-    num_all = Score.objects.all().count()
-    num_pass = Score.objects.filter(zy__gte=60, cx__gte=60, zs__gte=60, gl__gte=60, zh__gte=60).count()
-    number = int((num_pass / num_all) * 100)
-    name = request.session.get('name')
-    print(name)
-    e = Student.objects.get(name=name)
-    std_id = e.id
-    print(std_id)
-    std = Student.objects.get(id=std_id)
-    id = std.id
+def infor(request):  # 获取用户个人信息数据的接口
+    stu_id = request.session.get('ID')
+    print(stu_id)
+    if stu_id is None:
+        return JsonResponse({
+            'code': 403,
+            'msg': '获取数据失败，没有登录',
+        })
+    try:
+        std = Student.objects.get(id=stu_id)
+    except Exception as err:
+        print(err)
+        return JsonResponse({
+            'code': 500,
+            'msg': '用户不存在'
+        })
     age = std.age
     sp = std.sp
     pwd = std.pwd
-    return render(request, "infor.html", locals())
+    return JsonResponse({
+        'code': 200,
+        'msg': '获取数据成功',
+        'data': {
+            'age': age,
+            'sp': sp,
+            'pwd': pwd
+        }
+    })
 
 
 def password_change_form(request):  # 用户信息页面功能实现及调用
-    name = request.session.get('name')
-    e = Student.objects.get(name=name)
-    num_all = Score.objects.all().count()
-    num_pass = Score.objects.filter(zy__gte=60, cx__gte=60, zs__gte=60, gl__gte=60, zh__gte=60).count()
-    number = int((num_pass / num_all) * 100)
+    stu_id = request.session.get('ID')
+    if stu_id is None:
+        return JsonResponse({
+            'code': 403,
+            'msg': '操作失败，没有登录',
+            'data': {}
+        })
+    try:
+        e = Student.objects.get(id=stu_id)
+    except Exception as err:
+        return JsonResponse({
+            'code': 500,
+            'msg': '用户不存在'
+        })
+    status = 0
+    msg = '请使用POST方法'
     if request.method == 'POST':
-        opwd = request.POST.get('old_password')
-        npwd1 = request.POST.get('new_password1')
-        npwd2 = request.POST.get('new_password2')
+        post_data = json.loads(request.body)
+        opwd = post_data['old_password']
+        npwd1 = post_data['new_password1']
+        npwd2 = post_data['new_password2']
         if opwd != "":
             opwd = int(opwd)
         if npwd1 != "":
@@ -81,140 +143,191 @@ def password_change_form(request):  # 用户信息页面功能实现及调用
             npwd2 = int(npwd2)
         print(opwd, npwd1, npwd2)
         print(type(opwd))
-        std_id = e.id
-        std = Student.objects.get(id=std_id)
-        id = std.id
-        pwd = std.pwd
+        pwd = e.pwd
         print(id, pwd)
         print(type(pwd))
         if opwd == pwd:
             if npwd1 == '' or npwd2 == '':
-                pwd_error3 = "您的新密码与确认密码存在空值，请仔细检查重新输入"
-                return render(request, "password_change_form.html", locals())
+                status = 1
+                msg = "您的新密码与确认密码存在空值，请仔细检查重新输入"
             else:
                 if npwd1 == npwd2:
                     if opwd == npwd1:
-                        pwd_error4 = "您的新密码与旧密码一致，请仔细检查重新输入"
-                        return render(request, "password_change_form.html", locals())
+                        status = 2
+                        msg = "您的新密码与旧密码一致，请仔细检查重新输入"
                     else:
-                        std.pwd = npwd1
-                        std.save()
-                        res = "密码修改成功，请您重新登录！"
-                        return render(request, "password_change_form.html", locals())
+                        e.pwd = npwd1
+                        e.save()
+                        status = 3
+                        msg = "密码修改成功，请您重新登录！"
                 else:
-                    pwd_error2 = "您的新密码与确认密码不一致，请仔细检查重新输入"
-                    return render(request, "password_change_form.html", locals())
+                    status = 4
+                    msg = "您的新密码与确认密码不一致，请仔细检查重新输入"
         else:
-            pwd_error1 = "您的旧密码输入错误，请仔细检查重新输入"
-            return render(request, "password_change_form.html", locals())
-    return render(request, "password_change_form.html", locals())
+            status = 5
+            msg = "您的旧密码输入错误，请仔细检查重新输入"
+    return JsonResponse({
+        'code': 200,
+        'msg': '操作成功',
+        'data': {
+            'status': status,
+            'msg': msg
+        }
+    })
 
 
-def shenhe_upload(request):  # 上传审核材料页面功能实现及调用
-    ID0 = request.session.get('ID')
+def shenhe_upload(request):  # 上传审核材料接口
+    stu_id = request.session.get('ID')
     name = request.session.get('name')
-    num_all = Score.objects.all().count()
-    num_pass = Score.objects.filter(zy__gte=60, cx__gte=60, zs__gte=60, gl__gte=60, zh__gte=60).count()
-    number = int((num_pass / num_all) * 100)
-    print(ID0)
+    if stu_id is None:
+        return JsonResponse({
+            'code': 403,
+            'msg': '操作失败，没有登录',
+        })
+    print(stu_id)
+    code = 405
+    status = 0
+    msg = '请使用POST方法'
     if request.method == "POST":
-        file = request.FILES['image']
+        code = 200
+        post_data = json.loads(request.body)
+        file = post_data['image']
         file_name = str(file)
         print(file_name)
         if file and (
                 file_name.lower().endswith(
                     ('.bmp', '.dib', '.png', '.jpg', '.jpeg', '.pbm', '.pgm', '.ppm', '.tif', '.tiff'))):
-            models.shenhe.objects.create(no=ID0, miaoshu=request.POST['miaoshu'], leibie=request.POST['leibie'],
+            models.shenhe.objects.create(no=stu_id, miaoshu=post_data['miaoshu'], leibie=post_data['leibie'],
                                          image=file)
+            status = 1
+            msg = '上传审核材料成功'
         else:
-            return render(request, 'error2.html')
-    shenhe_list_obj = models.shenhe.objects.filter(no=ID0)
-    request.session['ID0'] = ID0
-    return render(request, 'tables-editable.html',
-                  {'shenhe_list': shenhe_list_obj, 'ID0': ID0, 'name': name, 'num_pass': num_pass, 'num_all': num_all,
-                   'number': number})
+            status = 2
+            msg = '文件上传错误，文件为空或文件格式不正确'
+    return JsonResponse({
+        'code': code,
+        'msg': msg,
+        'status': status
+    })
+
+
+def shenhe_get(request):
+    stu_id = request.session.get('ID')
+    if stu_id is None:
+        return JsonResponse({
+            'code': 403,
+            'msg': '操作失败，没有登录',
+        })
+    shenhe_list_obj = models.shenhe.objects.filter(no=stu_id)
+    shenhe_list = ShenHeSerializer(instance=shenhe_list_obj, many=True)
+
+    return JsonResponse({
+        'code': 200,
+        'msg': '获取审核材料数据成功',
+        'data': {
+            'shenhe_list': shenhe_list.data,  # 需要加上.data
+            'stu_id': stu_id,
+            'name': name
+        }
+    })
 
 
 def shenhe_delete(request):  # 删除审核材料功能实现
-    id = request.GET.get('id')
-    models.shenhe.objects.filter(id=id).delete()
-    # return render(request, 'tables-editable.html')
-    return redirect("http://127.0.0.1:8000/login/tables-editable.html")
+    stu_id = request.session.get('ID')
+    if stu_id is None:
+        return JsonResponse({
+            'code': 403,
+            'msg': '操作失败，没有登录',
+        })
+    msg = '请使用GET方法'
+    status = 0
+    if request.method == 'GET':
+        shenhe_id = request.GET.get('id')
+        models.shenhe.objects.filter(id=shenhe_id).delete()
+        msg = '删除审核材料成功'
+        status = 1
+    return JsonResponse({
+        'code': 200,
+        'msg': msg,
+        'status': status
+    })
 
 
-@csrf_protect
+# @csrf_protect
 # 登录界面
 def login(request):  # 登录页面功能实现
+    code = 405
+    status = 0
+    msg = '操作失败，请使用POST方法！'
     if request.method == 'POST':
+        code = 200
         print("进入页面")
-        id = str(request.POST.get('id'))
-        pwd = str(request.POST.get('pwd'))
-        # id = str(id)
-        # pwd = str(pwd)
-        if id.isdigit():
+        post_body = json.loads(request.body)
+        print(post_body)
+        stu_id = post_body['stu_id']
+        pwd = post_body['pwd']
+        print('stu_id: ' + stu_id)
+        print('pwd: ' + pwd)
+        if stu_id.isdigit():
             try:
-                student = Student.objects.get(id=id)
-            except Exception as err:
-                return render(request, 'error.html')
-            sid = str(student.id)
-            spwd = str(student.pwd)
-            print(id, pwd)
-            print(sid, spwd)
-            if id == sid and pwd == spwd:
+                student = Student.objects.get(id=stu_id, pwd=pwd)
                 print('登录成功')
-                num_all = Score.objects.all().count()
-                num_pass = Score.objects.filter(zy__gte=60, cx__gte=60, zs__gte=60, gl__gte=60, zh__gte=60).count()
-                number = int((num_pass / num_all) * 100)
-                zh = Score.objects.filter(zy__gte=60).count()
-                ch = Score.objects.filter(cx__gte=60).count()
-                know = Score.objects.filter(zs__gte=60).count()
-                gl = Score.objects.filter(gl__gte=60).count()
-                select(id)
-                max_Score_list = max_Score()
+                msg = '登录成功！'
+                status = 1
                 request.session['ID'] = student.id
                 request.session['name'] = student.name
-                std_id = student.id
-                print(std_id)
-                std = Early_Warning.objects.get(id=std_id)
-                if std.minimum > 24 and std.compulsory > 20 and std.elective > 4 and std.physical > 60 and std.cet4 > 425 and std.mandarin > 80:
-                    ans = '满足毕业最低要求'
-                else:
-                    ans = '不满足毕业最低要求'
-                return render(request, 'index.html',
-                              {'ID': student.id, 'name': student.name, 'ans': ans, 'm1': max_Score_list[0],
-                               'm2': max_Score_list[1], 'm3': max_Score_list[2]
-                                  , 'm4': max_Score_list[3], 'm5': max_Score_list[4], 'num_all': num_all,
-                               'num_pass': num_pass, 'number': number, 'zh': zh, 'ch': ch, 'know': know, 'gl': gl}, )
-            else:
-                return render(request, 'error.html')
+            except Exception as err:
+                print(err)
+                msg = '学号或密码错误！'
+                status = 2
         else:
-            return render(request, 'error.html')
-    else:
-        return render(request, 'error.html')
+            msg = '学号必须全为数字！'
+            status = 3
+    return JsonResponse({
+        'code': code,
+        'msg': msg,
+        'status': status
+    })
 
 
 def academic_Early_Warning(request):  # 学业预警页面功能实现及调用
-    name = request.session.get('name')
-    print(name)
+    stu_id = request.session.get('ID')
+    print(stu_id)
+    std = Early_Warning.objects.get(id=stu_id)
+    graduation_req = std.grad_req_id
     num_all = Early_Warning.objects.all().count()
-    num_pass = Early_Warning.objects.filter(minimum__gte=24, compulsory__gte=20, elective__gte=4, physical__gte=60,
-                                            cet4__gte=425, mandarin__gte=80).count()
-    number = int((num_pass / num_all) * 100)
-    e = Student.objects.get(name=name)
-    std_id = e.id
-    print(std_id)
-    std = Early_Warning.objects.get(id=std_id)
+    num_pass = Early_Warning.objects.filter(minimum__gte=graduation_req.credit,
+                                            compulsory__gte=graduation_req.compulsory,
+                                            elective__gte=graduation_req.elective,
+                                            physical__gte=graduation_req.physical,
+                                            cet4__gte=graduation_req.cet4,
+                                            mandarin__gte=graduation_req.mandarin).count()
+    rate = int((num_pass / num_all) * 100)
     minimum = std.minimum
     compulsory = std.compulsory
     elective = std.elective
     physical = std.physical
     cet4 = std.cet4
     mandarin = std.mandarin
-    return render(request, 'Academic_Early_Warning.html', locals())
+    return JsonResponse({
+        'code': 200,
+        'msg': '获取数据成功',
+        'data': {
+            'num_all': num_all,
+            'num_pass': num_pass,
+            'rate': rate,
+            'minimum': minimum,
+            'compulsory': compulsory,
+            'elective': elective,
+            'physical': physical,
+            'cet4': cet4,
+            'mandarin': mandarin
+        }
+    })
 
 
 def max_Score():  # 主页面最高成绩展示功能实现
-    max_Score_list = list()
+    max_score_list = list()
     m1 = Score.objects.aggregate(max1=Max("zy"))
     m2 = Score.objects.aggregate(max2=Max("cx"))
     m3 = Score.objects.aggregate(max3=Max("zs"))
@@ -225,19 +338,25 @@ def max_Score():  # 主页面最高成绩展示功能实现
     value3 = list(m3.values())[0]
     value4 = list(m4.values())[0]
     value5 = list(m5.values())[0]
-    max_Score_list.append(value1)
-    max_Score_list.append(value2)
-    max_Score_list.append(value3)
-    max_Score_list.append(value4)
-    max_Score_list.append(value5)
-    print(max_Score_list)
-    return max_Score_list
+    max_score_list.append(value1)
+    max_score_list.append(value2)
+    max_score_list.append(value3)
+    max_score_list.append(value4)
+    max_score_list.append(value5)
+    print(max_score_list)
+    return max_score_list
 
 
 def form_editor(request):  # 评分准则页面调用
     name = request.session.get('name')
     print(name)
-    return render(request, "form-editors.html", locals())
+    return JsonResponse({
+        'code': 200,
+        'msg': '获取数据成功',
+        'data': {
+            'name': name
+        }
+    })
 
 
 def select(i):  # 主页面雷达图成绩展示功能实现
@@ -298,12 +417,19 @@ def select(i):  # 主页面雷达图成绩展示功能实现
     plt.savefig("static\\image\\1.png", format='png')
 
 
-def suggestion(request, p1):  # 该函数实现发展建议页面功能
+def suggestion(request, p1):
     print(p1)
-    ID = request.session.get('ID')
+    stu_id = request.session.get('ID')
     name = request.session.get('name')
-    e = Score.objects.get(id=ID)
-    print(ID)
+    try:
+        e = Score.objects.get(id=stu_id)
+    except Exception as err:
+        print(err)
+        return JsonResponse({
+            'code': 500,
+            'msg': '用户不存在'
+        })
+    print(stu_id)
     if p1 == 1:
         print(e.zy)
         g = grade(e.zy)
@@ -324,16 +450,23 @@ def suggestion(request, p1):  # 该函数实现发展建议页面功能
         g = grade(e.zh)
         print(e.zh)
         print(g)
+    return JsonResponse({
+        'code': 200,
+        'msg': '获取数据成功',
+        'data': {
+            'grade': g,
+            'name': name
+        }
+    })
 
-    return render(request, 'suggestion.html', {'grade': g, 'name': name})
 
+def grade(i):
 
-def grade(i):  # 该函数实现发展建议功能中的分级排名功能
     if i >= 80:
-        grade = 'A'
-    elif 60 <= i < 80:
-        grade = 'B'
-    elif i < 60:
-        grade = 'C'
+        the_grade = 'A'
+    elif i >= 60:
+        the_grade = 'B'
+    else:
+        the_grade = 'C'
 
-    return grade
+    return the_grade

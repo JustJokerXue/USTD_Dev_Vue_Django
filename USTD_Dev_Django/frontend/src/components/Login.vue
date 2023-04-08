@@ -12,23 +12,22 @@
           <div class="_3CkMCIo8-RsWtcLQqsuKBh">
             <div class="_3lr3h2hawOi8pO8fYLQcjI">用户登录</div>
             <form action="login/" method="post">
-              {% csrf_token %}
               <div class="_6vZdUKmPDGrrza0LnuXD9">
                 <div>
                   <div class="mobileIcon"></div>
-                  <input type="text" name="id" autocomplete="off">
+                  <input type="text" v-model="stu_id" name="id" autocomplete="off">
                   <p class="_2nSTvdgBwioyepYsyeaVPN"></p>
                 </div>
               </div>
               <div class="_6vZdUKmPDGrrza0LnuXD9">
                 <div>
                   <div class="passwordIcon"></div>
-                  <input type="password" name="pwd" autocomplete="off">
+                  <input type="password" v-model="pwd" name="pwd" autocomplete="off">
                   <p class="_2nSTvdgBwioyepYsyeaVPN"></p>
                 </div>
               </div>
               <div class="_6vZdUKmPDGrrza0LnuXD9">
-                <input type="submit" value="登录" class="_2ZggRBvDTyawWaQQ6ambu4">
+                <input @click="login" type="button" value="登录" class="_2ZggRBvDTyawWaQQ6ambu4">
               </div>
             </form>
           </div>
@@ -39,8 +38,33 @@
 </template>
 
 <script>
+import axios from "axios";
+
 export default {
-  name: 'Login'
+  name: 'Login',
+  data() {
+    return {
+      stu_id: '',
+      pwd: '',
+    }
+  },
+  methods: {
+    login() {
+      axios({
+        method: 'post',
+        url: '/login',
+        data: {
+          stu_id: this.stu_id,
+          pwd: this.pwd
+        }
+      }).then((res)=>{
+        console.log(this.stu_id)
+        alert(res.data.msg)
+      }).catch((err)=>{
+        console.log(err)
+      })
+    }
+  }
 }
 </script>
 

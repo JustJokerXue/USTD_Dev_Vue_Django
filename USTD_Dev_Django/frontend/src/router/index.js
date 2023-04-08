@@ -11,16 +11,12 @@ import Infor from '../components/Infor.vue'
 import PwdChange from '../components/PwdChange.vue'
 import Suggestion from '../components/Suggestion.vue'
 import Verify from '../components/Verify.vue'
+import VueRouter from "vue-router";
 
-Vue.use(Router)
+Vue.use(VueRouter)
 
-export default new Router({
+export default new VueRouter({
   routes: [
-    {
-      path: '/',
-      name: 'HelloWorld',
-      component: HelloWorld
-    },
     {
       path: '/AcademicWarning',
       name: 'AcademicWarning',
@@ -47,7 +43,7 @@ export default new Router({
       component: Infor
     },
     {
-      path: '/Login',
+      path: '/',
       name: 'Login',
       component: Login
     },

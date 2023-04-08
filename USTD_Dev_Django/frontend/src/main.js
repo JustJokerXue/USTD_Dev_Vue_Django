@@ -5,15 +5,17 @@ import App from './App'
 import router from './router'
 import ElementUI from 'element-ui'
 import 'element-ui/lib/theme-chalk/index.css'
+import VueRouter from "vue-router";
+import axios from 'axios'
 
 Vue.use(ElementUI)
-
+Vue.use(VueRouter)
 Vue.config.productionTip = false
 
 /* eslint-disable no-new */
 new Vue({
   el: '#app',
-  router,
+  router: router,
   components: {App},
   template: '<App/>'
 })

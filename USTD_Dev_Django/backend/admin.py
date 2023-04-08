@@ -1,11 +1,11 @@
-from backend.models import Early_Warning
+from .models import Early_Warning
 # Register your models here.
-from backend.models import Innovation, majorTechnology, manage, ComprehensiveDevelopment, responsible, \
-    administrator
-from backend.models import Knowledge
-from backend.models import Score
-from backend.models import Student
-from backend.models import shenhe
+from .models import Innovation, majorTechnology, manage, ComprehensiveDevelopment, responsible, \
+    administrator, GraduationRequirement
+from .models import Knowledge
+from .models import Score
+from .models import Student
+from .models import shenhe
 from django.contrib import admin
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
@@ -13,11 +13,12 @@ from django.utils.safestring import mark_safe
 
 @admin.register(Early_Warning)
 class Early_WarningAdmin(admin.ModelAdmin):  # 学业预警成绩表后台布局设计
-    list_display = ('id', 'minimum', 'compulsory', 'elective', 'physical', 'cet4', 'mandarin')
+    list_display = ('id', 'minimum', 'compulsory', 'elective', 'physical', 'cet4', 'mandarin', 'grad_req_id')
     list_display_links = ("id",)
     search_fields = ('id',)  # 查找
     list_per_page = 20
     list_editable = ('minimum', 'compulsory', 'elective', 'physical', 'cet4', 'mandarin')
+    fk_fields = ['grad_req_id']
     # list_filter = ("id", "sp")
 
 
@@ -106,7 +107,7 @@ class administratorAdmin(admin.ModelAdmin):  # 管理员用户信息表后台布
 @admin.register(shenhe)
 # admin.site.register(要写的表)  与  @admin.register(要写的表)  功能是一样的
 class shenheAdmin(admin.ModelAdmin):  # 上传审核材料汇总表后台布局设计
-    list_display = ('no', 'miaoshu', 'leibie', 'image', 'image_img', 'zhuangtai')
+    list_display = ('no', 'miaoshu', 'leibie', 'extra_points', 'image', 'image_img', 'zhuangtai')
     list_display_links = ("no",)
     search_fields = ('no',)  # 查找
     list_per_page = 20
@@ -116,6 +117,21 @@ class shenheAdmin(admin.ModelAdmin):  # 上传审核材料汇总表后台布局�
     # 判断通过的
     def mak_pub(self, request, queryset):
         for item in queryset:
+            if item.zhuangtai == 'T':
+                return
+            try:
+                score_item = Score.objects.get(id=item.no)
+                if item.leibie == 'zy':
+                    score_item.zy += item.extra_points
+                elif item.leibie == 'cx':
+                    score_item.cx += item.extra_points
+                elif item.leibie == 'gl':
+                    score_item.gl += item.extra_points
+                elif item.leibie == 'zh':
+                    score_item.zh += item.extra_points
+                score_item.save()
+            except Exception as err:
+                print(err)
             print(item)
             item.zhuangtai = 'T'
             item.save()
@@ -126,12 +142,36 @@ class shenheAdmin(admin.ModelAdmin):  # 上传审核材料汇总表后台布局�
     # 判断未通过的
     def mak_pub1(self, request, queryset):
         for item in queryset:
+            if item.zhuangtai == 'F':
+                return
+            try:
+                score_item = Score.objects.get(id=item.no)
+                if item.leibie == 'zy':
+                    score_item.zy -= item.extra_points
+                elif item.leibie == 'cx':
+                    score_item.cx -= item.extra_points
+                elif item.leibie == 'gl':
+                    score_item.gl -= item.extra_points
+                elif item.leibie == 'zh':
+                    score_item.zh -= item.extra_points
+                score_item.save()
+            except Exception as err:
+                print(err)
             print(item)
             item.zhuangtai = 'F'
             item.save()
 
     # 更改Action的内容为通过
     mak_pub1.short_description = "未通过"
+
+
+@admin.register(GraduationRequirement)
+class GraduationRequirementAdmin(admin.ModelAdmin):  # 毕业要求后台设计
+    list_display = ('id', 'credit', 'compulsory', 'elective', 'physical', 'cet4', 'mandarin')
+    list_display_links = ("id",)
+    search_fields = ('id', )  # 查找
+    list_per_page = 20
+    list_editable = ('credit', 'compulsory', 'elective', 'physical', 'cet4', 'mandarin')
 
 
 admin.site.site_header = '大学生发展综合素质测评系统管理后台'  # 设置header

@@ -63,10 +63,11 @@ def get_score_std(request):
     num_all = Score.objects.all().count()
     num_pass = Score.objects.filter(zy__gte=60, cx__gte=60, zs__gte=60, gl__gte=60, zh__gte=60).count()
     rate = int((num_pass / num_all) * 100)
-    zh = Score.objects.filter(zy__gte=60).count()
-    ch = Score.objects.filter(cx__gte=60).count()
-    know = Score.objects.filter(zs__gte=60).count()
+    zy = Score.objects.filter(zy__gte=60).count()
+    cx = Score.objects.filter(cx__gte=60).count()
+    zs = Score.objects.filter(zs__gte=60).count()
     gl = Score.objects.filter(gl__gte=60).count()
+    zh = Score.objects.filter(zh__gte=60).count()
 
     return JsonResponse({
         'code': 200,
@@ -75,10 +76,11 @@ def get_score_std(request):
             'num_all': num_all,
             'num_pass': num_pass,
             'rate': rate,
-            'zh': zh,
-            'ch': ch,
-            'know': know,
-            'gl': gl
+            'zy': zy,
+            'cx': cx,
+            'zs': zs,
+            'gl': gl,
+            'zh': zh
         }
     })
 
@@ -119,33 +121,41 @@ def password_change_form(request):  # 用户信息页面功能实现及调用
         return JsonResponse({
             'code': 403,
             'msg': '操作失败，没有登录',
-            'data': {}
         })
     try:
         e = Student.objects.get(id=stu_id)
     except Exception as err:
+        print(err)
         return JsonResponse({
             'code': 500,
             'msg': '用户不存在'
         })
     status = 0
+    code = 405
     msg = '请使用POST方法'
     if request.method == 'POST':
-        post_data = json.loads(request.body)
-        opwd = post_data['old_password']
-        npwd1 = post_data['new_password1']
-        npwd2 = post_data['new_password2']
+        code = 200
+        opwd = ''
+        npwd1 = ''
+        npwd2 = ''
+        try:
+            post_data = json.loads(request.body)
+            opwd = post_data['old_password']
+            npwd1 = post_data['new_password1']
+            npwd2 = post_data['new_password2']
+        except Exception as err:
+            print(err)
+            return JsonResponse({
+                'code': 501,
+                'msg': '请求参数为空或不符合要求！'
+            })
         if opwd != "":
             opwd = int(opwd)
         if npwd1 != "":
             npwd1 = int(npwd1)
         if npwd2 != "":
             npwd2 = int(npwd2)
-        print(opwd, npwd1, npwd2)
-        print(type(opwd))
         pwd = e.pwd
-        print(id, pwd)
-        print(type(pwd))
         if opwd == pwd:
             if npwd1 == '' or npwd2 == '':
                 status = 1
@@ -167,18 +177,14 @@ def password_change_form(request):  # 用户信息页面功能实现及调用
             status = 5
             msg = "您的旧密码输入错误，请仔细检查重新输入"
     return JsonResponse({
-        'code': 200,
-        'msg': '操作成功',
-        'data': {
-            'status': status,
-            'msg': msg
-        }
+        'code': code,
+        'msg': msg,
+        'status': status
     })
 
 
 def shenhe_upload(request):  # 上传审核材料接口
     stu_id = request.session.get('ID')
-    name = request.session.get('name')
     if stu_id is None:
         return JsonResponse({
             'code': 403,
@@ -190,8 +196,16 @@ def shenhe_upload(request):  # 上传审核材料接口
     msg = '请使用POST方法'
     if request.method == "POST":
         code = 200
-        post_data = json.loads(request.body)
-        file = post_data['image']
+        file = None
+        try:
+            post_data = json.loads(request.body)
+            file = post_data['image']
+        except Exception as err:
+            print(err)
+            return JsonResponse({
+                'code': 501,
+                'msg': '请求参数为空或不符合要求！'
+            })
         file_name = str(file)
         print(file_name)
         if file and (
@@ -242,13 +256,26 @@ def shenhe_delete(request):  # 删除审核材料功能实现
         })
     msg = '请使用GET方法'
     status = 0
+    code = 405
     if request.method == 'GET':
         shenhe_id = request.GET.get('id')
-        models.shenhe.objects.filter(id=shenhe_id).delete()
-        msg = '删除审核材料成功'
-        status = 1
+        if shenhe_id is None:
+            return JsonResponse({
+                'code': 501,
+                'msg': '请求参数为空或不符合要求'
+            })
+        sheng_items = models.shenhe.objects.filter(id=shenhe_id)
+        if len(sheng_items) > 0:
+            code = 200
+            sheng_items.delete()
+            msg = '删除审核材料成功'
+            status = 1
+        else:
+            code = 500
+            msg = '删除审核材料失败，没有该id对应的审核材料'
+            status = 2
     return JsonResponse({
-        'code': 200,
+        'code': code,
         'msg': msg,
         'status': status
     })
@@ -294,15 +321,31 @@ def login(request):  # 登录页面功能实现
 def academic_Early_Warning(request):  # 学业预警页面功能实现及调用
     stu_id = request.session.get('ID')
     print(stu_id)
-    std = Early_Warning.objects.get(id=stu_id)
+    if stu_id is None:
+        return JsonResponse({
+            'code': 403,
+            'msg': '操作失败，没有登录',
+        })
+    try:
+        std = Early_Warning.objects.get(id=stu_id)
+    except Exception as err:
+        print(err)
+        return JsonResponse({
+            'code': 500,
+            'msg': '该学生没有学业预警信息'
+        })
     graduation_req = std.grad_req_id
     num_all = Early_Warning.objects.all().count()
-    num_pass = Early_Warning.objects.filter(minimum__gte=graduation_req.credit,
-                                            compulsory__gte=graduation_req.compulsory,
-                                            elective__gte=graduation_req.elective,
-                                            physical__gte=graduation_req.physical,
-                                            cet4__gte=graduation_req.cet4,
-                                            mandarin__gte=graduation_req.mandarin).count()
+    all_items = Early_Warning.objects.all()
+    num_pass = 0
+    for item in all_items:
+        if item.minimum >= item.grad_req_id.credit \
+                and item.compulsory >= item.grad_req_id.compulsory\
+                and item.elective >= item.grad_req_id.elective\
+                and item.physical >= item.grad_req_id.physical\
+                and item.cet4 >= item.grad_req_id.cet4\
+                and item.mandarin >= item.grad_req_id.mandarin:
+            num_pass += 1
     rate = int((num_pass / num_all) * 100)
     minimum = std.minimum
     compulsory = std.compulsory
@@ -322,7 +365,8 @@ def academic_Early_Warning(request):  # 学业预警页面功能实现及调用
             'elective': elective,
             'physical': physical,
             'cet4': cet4,
-            'mandarin': mandarin
+            'mandarin': mandarin,
+            'graduation_req': GraduationRequirementSerializer(instance=graduation_req, many=False).data
         }
     })
 

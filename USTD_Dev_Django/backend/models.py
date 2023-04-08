@@ -231,6 +231,7 @@ class administrator(models.Model):  # 管理员用户信息表
 
 
 class shenhe(models.Model):  # 上传审核材料汇总表
+    id = models.IntegerField(default=0, verbose_name='审核材料id', primary_key=True)
     no = models.IntegerField(default=0, verbose_name='学号', null=True)
     miaoshu = models.CharField(max_length=200, verbose_name='材料描述', null=True)
     leibie = models.CharField(max_length=200, verbose_name='材料类别',

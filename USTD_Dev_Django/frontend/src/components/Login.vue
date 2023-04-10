@@ -38,7 +38,6 @@
 </template>
 
 <script>
-import axios from "axios";
 
 export default {
   name: 'Login',
@@ -50,7 +49,7 @@ export default {
   },
   methods: {
     login() {
-      axios({
+      this.$axios({
         method: 'post',
         url: '/login',
         data: {
@@ -58,8 +57,17 @@ export default {
           pwd: this.pwd
         }
       }).then((res)=>{
-        console.log(this.stu_id)
-        alert(res.data.msg)
+        const res_data = res.data;
+        if (res_data.code === 200 && res_data.status === 1) {
+          this.$router.push({
+            path: '/Student',
+            params: {
+
+            }
+          })
+        } else {
+          alert(res_data.msg)
+        }
       }).catch((err)=>{
         console.log(err)
       })

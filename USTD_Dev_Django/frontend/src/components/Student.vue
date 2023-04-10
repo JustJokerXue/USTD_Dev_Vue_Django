@@ -259,12 +259,12 @@
                 <ul class="list-inline">
                   <li class="list-inline-item mr-3">
                     <input class="knob" data-width="48" data-height="48" data-linecap="round"
-                           data-fgcolor="#605daf" value="" data-skin="tron" data-angleoffset="180"
+                           data-fgcolor="#605daf" :value="rate" data-skin="tron" data-angleoffset="180"
                            data-readonly="true" data-thickness=".1">
                   </li>
                   <li class="list-inline-item">
                     <span class="text-muted">成绩达标率</span>
-                    <h6>人/人</h6>
+                    <h6>{{num_pass}}人/{{num_all}}人</h6>
                   </li>
                 </ul>
               </div>
@@ -295,7 +295,7 @@
                           </i>
                         </div>
                         <div class="col-10 text-right">
-                          <h5 class="mt-0 mb-1">人</h5>
+                          <h5 class="mt-0 mb-1">{{zy}}人</h5>
                           <p class="mb-0 font-12 text-muted">专业技术能力</p>
                         </div>
                       </div>
@@ -314,7 +314,7 @@
                           </i>
                         </div>
                         <div class="col-10 text-right">
-                          <h5 class="mt-0 mb-1">人</h5>
+                          <h5 class="mt-0 mb-1">{{cx}}人</h5>
                           <p class="mb-0 font-12 text-muted">创新创业能力</p>
                         </div>
                       </div>
@@ -333,7 +333,7 @@
                           </i>
                         </div>
                         <div class="col-10 text-right">
-                          <h5 class="mt-0 mb-1">人</h5>
+                          <h5 class="mt-0 mb-1">{{zs}}人</h5>
                           <p class="mb-0 font-12 text-muted">知识学习能力</p>
                         </div>
                       </div>
@@ -352,7 +352,7 @@
                           </i>
                         </div>
                         <div class="col-10 text-right">
-                          <h5 class="mt-0 mb-1">人</h5>
+                          <h5 class="mt-0 mb-1">{{gl}}人</h5>
                           <p class="mb-0 font-12 text-muted">管理实践能力</p>
                         </div>
                       </div>
@@ -392,7 +392,7 @@
                 <div>
                   <h6 class="header-title mb-4 mt-0">直达链接</h6><br>
                   <a href="https://www.hunnu.edu.cn/">湖南师范大学官网</a><br><br>
-                  <a href="https://jwc.hunnu.edu.cn/">湖南师范大学教务处</a>/br><br>
+                  <a href="https://jwc.hunnu.edu.cn/">湖南师范大学教务处</a><br>
                   <a href="http://jwglnew.hunnu.edu.cn">湖南师范大学教务系统</a><br><br>
                   <a href="https://stustar.hunnu.edu.cn/">湖南师范大学学生工作处</a><br><br>
                   <a href="https://www.neea.edu.cn/">中国教育考试网</a><br><br>
@@ -404,12 +404,8 @@
                 <br><br>
                 <div>
                   <h6 class="header-title mb-4 mt-0"><font color="black">学业预警情况</font></h6>
-                  {% if ans == "满足毕业最低要求" %}
-                  <span><font color="green"><strong></strong></font></span><br><br>
-                  {% endif %}
-                  {% if ans == "不满足毕业最低要求" %}
-                  <span><font color="red"><strong></strong></font></span><br><br>
-                  {% endif %}
+                  <span v-if="this.ans === 0"><font color="green">满足毕业最低要求<strong></strong></font></span><br><br>
+                  <span v-if="this.ans === 1"><font color="red">不满足毕业最低要求<strong></strong></font></span><br><br>
                   <a href="#"><u>详细展开</u></a><br><br>
                 </div>
                 <!--                        <ul class="list-unstyled list-inline text-center mb-0 mt-3">-->
@@ -456,7 +452,7 @@
                              class="thumb-sm rounded-circle mr-2">***
                       </td>
                       <td>专业技术能力</td>
-                      <td></td>
+                      <td>{{this.m1}}</td>
                       <td>
                         <span class="badge badge-boxed  badge-soft-primary">优秀</span>
                       </td>
@@ -467,7 +463,7 @@
                              class="thumb-sm rounded-circle mr-2">***
                       </td>
                       <td>创新创业能力</td>
-                      <td></td>
+                      <td>{{this.m2}}</td>
 
                       <td>
                         <span class="badge badge-boxed  badge-soft-primary">优秀</span>
@@ -479,7 +475,7 @@
                              class="thumb-sm rounded-circle mr-2">***
                       </td>
                       <td>知识学习能力</td>
-                      <td></td>
+                      <td>{{this.m3}}</td>
 
                       <td>
                         <span class="badge badge-boxed  badge-soft-primary">优秀</span>
@@ -492,7 +488,7 @@
                              class="thumb-sm rounded-circle mr-2">***
                       </td>
                       <td>管理实践能力</td>
-                      <td></td>
+                      <td>{{this.m4}}</td>
 
                       <td>
                         <span class="badge badge-boxed  badge-soft-primary">优秀</span>
@@ -505,7 +501,7 @@
                              class="thumb-sm rounded-circle mr-2">***
                       </td>
                       <td>综合发展能力</td>
-                      <td></td>
+                      <td>{{this.m5}}</td>
 
                       <td>
                         <span class="badge badge-boxed  badge-soft-primary">优秀</span>
@@ -541,8 +537,59 @@ export default {
   name: 'Student',
   data() {
     return {
-      msg: 'Welcome to Your Vue.js App'
+      msg: 'Welcome to Your Vue.js App',
+      'num_all': 0, // 总人数
+      'num_pass': 0, // 总达标人数
+      'rate': 0, // 达标率
+      'zy': 0, // 专业技术能力达标人数
+      'cx': 0, // 创新创业能力达标人数
+      'zs': 0, // 知识学习能力达标人数
+      'gl': 0, // 管理实践能力达标人数
+      'zh': 0,  // 综合发展能力达标人数
+      "m1": 0, // 专业技术能力最高分
+      "m2": 0, // 创新创业能力最高分
+      "m3": 0, // 知识学习能力最高分
+      "m4": 0, // 管理实践能力最高分
+      "m5": 0, // 综合发展能力最高分
+      "ans": 1 // 学业预警情况：'满足/不满足毕业最低要求'
     }
+  },
+  methods: {
+
+  },
+  created() {
+    this.$axios({
+      method: 'post',
+      url: '/login/index'
+    }).then((res)=>{
+      if (res.data.code === 200) {
+        this.m1 = res.data.data.m1
+        this.m2 = res.data.data.m2
+        this.m3 = res.data.data.m3
+        this.m4 = res.data.data.m4
+        this.m5 = res.data.data.m5
+        this.ans = res.data.data.ans
+      } else {
+        console.log(res.data.msg)
+      }
+    }).catch((err)=>{
+      console.log(err)
+    })
+    this.$axios({
+      method: 'post',
+      url: '/api/get_score_std'
+    }).then((res)=>{
+      this.num_all = res.data.data.num_all
+      this.num_pass = res.data.data.num_pass
+      this.rate = res.data.data.rate
+      this.zy = res.data.data.zy
+      this.cx = res.data.data.cx
+      this.zs = res.data.data.zs
+      this.gl = res.data.data.gl
+      this.zh = res.data.data.zh
+    }).catch((err)=>{
+      console.log(err)
+    })
   }
 }
 </script>

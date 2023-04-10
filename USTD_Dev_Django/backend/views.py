@@ -42,9 +42,9 @@ def index(request):  # 主页面功能实现及调用
     if std.minimum >= graduation_req.credit and std.compulsory >= graduation_req.compulsory \
             and std.elective >= graduation_req.elective and std.physical >= graduation_req.physical \
             and std.cet4 >= graduation_req.cet4 and std.mandarin >= graduation_req.mandarin:
-        ans = '满足毕业最低要求'
+        ans = 0
     else:
-        ans = '不满足毕业最低要求'
+        ans = 1
     return JsonResponse({
         'code': 200,
         'msg': '获取数据成功',

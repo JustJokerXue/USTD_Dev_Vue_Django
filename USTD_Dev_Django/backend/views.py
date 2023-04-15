@@ -8,12 +8,53 @@ from django.views.decorators.csrf import csrf_protect
 import json
 
 from . import models
+from .models import Course, Activity, Weight
 
 from .serializers import *
 from django.http import JsonResponse
 
 # Create your views here.
 
+
+def Model_creat(id):
+    student = Student.objects.get(id=id)
+    name = student.name
+    score = Score.objects.filter(id=id)
+    course = Course.objects.filter(id=id)
+    if score.exists() and course.exists():
+        print("score and course is exist")
+        print("course and course is exist")
+    else:
+        score = Score(id=id)
+        score.save()
+        course = Course(id=id,name = name)
+        course.save()
+        print(score)
+        print(course)
+    return 0
+
+
+# Create your views here.
+def Calculate_grades(id):  # 计算总评分调用,在登录功能中登录成功就调用
+    #获取权重系数
+    weigth = Weight.objects.first()
+    #获取学生各方面评分
+    score = Score.objects.get(id=id)
+    #计算总成绩
+    overallgrade = weigth.zyweight * score.zy +weigth.cxweight * score.cx +weigth.zsweight * score.zs +weigth.glweight * score.gl +weigth.zhweight * score.zh
+    score.overallgrade = overallgrade
+    score.save()
+    print(weigth.zyweight, score.zy)
+    print(overallgrade)
+
+
+def Activity_new(request):  # 活动汇总调用
+    act_list = list()
+    act_list = Activity.objects.all()
+    act_json = serializers.serialize("json", act_list)   #转换json数据
+    print(act_list)
+    print(act_json)
+    return act_json
 
 def index(request):  # 主页面功能实现及调用
     stu_id = request.session.get('ID')

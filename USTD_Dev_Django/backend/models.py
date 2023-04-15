@@ -76,6 +76,7 @@ class Score(models.Model):  # 学生五大方面评分表
     zs = models.IntegerField(default=0, verbose_name='知识学习能力', null=True)
     gl = models.IntegerField(default=0, verbose_name='管理实践能力', null=True)
     zh = models.IntegerField(default=0, verbose_name='综合发展能力', null=True)
+    overallgrade = models.IntegerField(default=0, verbose_name='总评成绩', null=True)
 
     class Meta:
         db_table = 'Score'
@@ -87,8 +88,27 @@ class Score(models.Model):  # 学生五大方面评分表
             models.CheckConstraint(check=models.Q(zs__gte=0, zs__lte=100), name='zs'),
             models.CheckConstraint(check=models.Q(gl__gte=0, gl__lte=100), name='gl'),
             models.CheckConstraint(check=models.Q(zh__gte=0, zh__lte=100), name='zh'),
+            models.CheckConstraint(check=models.Q(overallgrade__gte=0, overallgrade__lte=100), name='overallgrade'),
         ]
 
+class Course(models.Model):  # 学生学习成绩表
+    name = models.CharField(max_length=200, verbose_name='姓名', null=True)
+    id = models.IntegerField(default=0, verbose_name='学号', primary_key=True)
+    course = models.CharField(max_length=200, default=0, verbose_name='课程', null=True)
+    grade = models.IntegerField(default=0, verbose_name='成绩', null=True)
+    gpa = models.FloatField(default=0, verbose_name='绩点', null=True)
+
+    class Meta:
+        db_table = 'Course'
+        verbose_name = "学习成绩"
+        verbose_name_plural = "学习成绩"
+        constraints = [
+            models.CheckConstraint(check=models.Q(grade__gte=0, grade__lte=100), name='grade'),
+            models.CheckConstraint(check=models.Q(gpa__gte=0, gpa__lte=5), name='gpa'),
+        ]
+
+    def __str__(self):
+        return self.name
 
 class Knowledge(models.Model):  # 学生知识学习评分表
     name = models.CharField(max_length=200, verbose_name='姓名', null=True)
@@ -261,3 +281,36 @@ class shenhe(models.Model):  # 上传审核材料汇总表
             self.image.url, self.image.url)
 
     image_img.short_description = '图片'
+
+class Weight(models.Model):  # 综测权重系数表
+    zyweight = models.FloatField(default=0, verbose_name='专业技术权重', null=True)
+    cxweight = models.FloatField(default=0, verbose_name='创新创业权重', null=True)
+    zsweight = models.FloatField(default=0, verbose_name='知识学习权重', null=True)
+    glweight = models.FloatField(default=0, verbose_name='管理实践权重', null=True)
+    zhweight = models.FloatField(default=0, verbose_name='综合发展权重', null=True)
+
+    class Meta:
+        db_table = 'Weight'
+        verbose_name = "综测权重系数"
+        verbose_name_plural = "综测权重系数"
+        constraints = [
+            models.CheckConstraint(check=models.Q(zyweight__gte=0, zyweight__lte=1), name='zyweight'),
+            models.CheckConstraint(check=models.Q(cxweight__gte=0, cxweight__lte=1), name='cxweight'),
+            models.CheckConstraint(check=models.Q(zsweight__gte=0, zsweight__lte=1), name='zsweight'),
+            models.CheckConstraint(check=models.Q(glweight__gte=0, glweight__lte=1), name='glweight'),
+            models.CheckConstraint(check=models.Q(zhweight__gte=0, zhweight__lte=1), name='zhweight'),
+
+        ]
+
+
+class Activity(models.Model):  # 活动表
+    aid = models.IntegerField(default=0, verbose_name='活动编号', null=True)
+    aname = models.CharField(max_length=200, verbose_name='活动名称', null=True)
+    content = models.CharField(max_length=200, verbose_name='活动内容', null=True)
+    organizer = models.CharField(max_length=200, verbose_name='活动举办方', null=True)
+    baoming = models.CharField(max_length=200, verbose_name='报名方式', null=True)
+
+    class Meta:
+        db_table = 'Activity'
+        verbose_name = "活动"
+        verbose_name_plural = "活动"
